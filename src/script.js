@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import firefliesVertexShader from './shaders/fireflies/vertex.glsl'
+import firefliesVertexFragmentShader from './shaders/fireflies/fragment.glsl'
 
 /**
  * Base
@@ -63,8 +65,38 @@ gltfLoader.load('portal.glb',(gltf)=>{
     scene.add(gltf.scene)
 
 })
+/**
+ * firefly
+ **/
+//gemotery
 
-
+const firefliesGemotery = new THREE.BufferGeometry();
+const firefliesCount = 30
+const postionArray = new Float32Array(firefliesCount*3);
+const scaleArray = new Float32Array(firefliesCount);
+for(let i =0 ;i< firefliesCount;i++){
+     postionArray[i*3]=(Math.random()-0.5)*4
+     postionArray[i*3+1]=Math.random()*1.5
+     postionArray[i*3+2]=(Math.random()-0.5)*4
+     scaleArray[i] = Math.random()
+}
+firefliesGemotery.setAttribute('aScale',new THREE.BufferAttribute(scaleArray,1))
+firefliesGemotery.setAttribute('position',new THREE.BufferAttribute(postionArray,3))
+const firefliesMaterial = new THREE.ShaderMaterial({
+    blending : THREE.AdditiveBlending,
+    depthWrite:false, 
+    vertexShader:firefliesVertexShader,
+    fragmentShader:firefliesVertexFragmentShader,
+    uniforms : {
+        uPixelRatio : { value : Math.min(window.devicePixelRatio,2)},
+        uSize : {value : 100}
+    },
+    transparent:true
+},)
+gui.add(firefliesMaterial.uniforms.uSize,'value').min(0).max(500).step(1).name('firefliesSize')
+// Points 
+const fireflies = new THREE.Points(firefliesGemotery,firefliesMaterial)
+scene.add(fireflies)
 /**
  * Sizes
  */
@@ -86,6 +118,8 @@ window.addEventListener('resize', () =>
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    //Update fireflies
+    firefliesMaterial.uniforms.uPixelRatio.value =Math.min(window.devicePixelRatio, 2)
 })
 
 /**
